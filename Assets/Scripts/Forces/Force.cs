@@ -5,9 +5,9 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace PhysicallyBasedAnimations
 {
-    public abstract class Force : MonoBehaviour
+    public class Force : MonoBehaviour
     {
-        public abstract void AddForces(Vector<float> f);
-        public abstract void AddJacobians(Matrix<float> Jx, Matrix<float> Jv);
+        public virtual void AddForces(Vector<float> f) { }
+        public virtual void AddJacobians(Matrix<float> Jx, Matrix<float> Jv) { }
     }
 }

@@ -15,7 +15,7 @@ namespace PhysicallyBasedAnimations
         public string filename = "bunny";
 
         //
-        private List<Vector3> vertices = new List<Vector3>();
+        public List<Vector3> vertices = new List<Vector3>();
         //
         public List<Vector3i> triangles = new List<Vector3i>();
         public List<Vector3i> surfaceTriangles = new List<Vector3i>();
@@ -58,12 +58,7 @@ namespace PhysicallyBasedAnimations
             GL.End();
             GL.PopMatrix();
         }*/
-
-        void Update()
-        {
-            this.UpdateMesh();
-        }
-
+        
         public void UpdateMesh()
         {
             Vector3[] newVertices = vertices.ToArray();

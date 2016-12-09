@@ -10,15 +10,15 @@ namespace PhysicallyBasedAnimations
     {
         private float _t;
         public List<Particle> _particles;
-        private List<Force> _forces;
-        public float _msu; // coefficient of friction
+        public List<Force> _forces;
+        private float _msu; // coefficient of friction
 
         public override int GetNumDOFs()
         {
             return 3 * this._particles.Count;
         }
 
-        public override void GetState(ref Vector<float> x, ref Vector<float> v, ref float t)
+        public override void GetState(Vector<float> x, Vector<float> v, ref float t)
         {
             t = this._t;
             for (int p = 0; p < this._particles.Count; p++)
@@ -40,7 +40,7 @@ namespace PhysicallyBasedAnimations
             }
         }
 
-        public override void GetInertia(ref Matrix<float> M)
+        public override void GetInertia(Matrix<float> M)
         {
             M.Clear();
 
@@ -50,7 +50,7 @@ namespace PhysicallyBasedAnimations
             }
         }
 
-        public override void GetForces(ref Vector<float> f)
+        public override void GetForces(Vector<float> f)
         {
             for (int i = 0; i < this._particles.Count; i++)
             {
@@ -64,16 +64,16 @@ namespace PhysicallyBasedAnimations
             }
         }
 
-        public override void GetAccelerations(ref Vector<float> a)
+        public override void GetAccelerations(Vector<float> a)
         {
-            this.GetForces(ref a);
+            this.GetForces(a);
             for (int p = 0; p < this._particles.Count; p++)
             {
                 a.SetSubVector(p * 3, 3, a.SubVector(p * 3, 3) / this._particles[p].m);
             }
         }
 
-        public override void GetJacobians(ref Matrix<float> Jx, ref Matrix<float> Jv)
+        public override void GetJacobians(Matrix<float> Jx, Matrix<float> Jv)
         {
             Jx.Clear();
             Jv.Clear();
@@ -94,10 +94,11 @@ namespace PhysicallyBasedAnimations
             }
         }
 
+
         public class Particle
         {
-            public int i;          // index
-            public float m;       // mass
+            public int i;               // index
+            public float m;             // mass
             public Vector<float> x;     // position
             public Vector<float> v;     // velocity
             public Vector<float> f_ext; // external forces
