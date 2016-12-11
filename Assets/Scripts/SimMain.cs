@@ -19,14 +19,7 @@ public class SimMain : MonoBehaviour {
 	void Update () {
         StartCoroutine(Step(this.dt));
     }
-
-    public void UpdateMesh()
-    {
-        for (int i = 0; i < this.mesh.vertices.Count; i++)
-        {
-           // mesh.vertices[i] = integrator.system._particles[i].x;
-        }
-    }
+    
 
     private IEnumerator Step(float dt)
     {

@@ -8,89 +8,99 @@ namespace PhysicallyBasedAnimations
 {
     public class ParticleSystem : PhysicalSystem
     {
-        private float _t;
-        public List<Particle> _particles;
-        public List<Force> _forces;
-        private float _msu; // coefficient of friction
+        public List<Particle> particles { get; private set; }
+        public List<Force> forces = new List<Force>();
+        private float m_t;
+        
+        public void Init(TetMesh mesh, float pMass)
+        {
+            this.particles = new List<Particle>();
+            this.m_t = 0f;
+
+            //
+            for (int i = 0; i < mesh.vertices_init.Count; i++)
+            {
+                Vector<float> x = Vector<float>.Build.DenseOfArray(new float[] { mesh.vertices_init[i][0], mesh.vertices_init[i][1], mesh.vertices_init[i][2] });
+                Vector<float> v = Vector<float>.Build.Dense(3);
+
+                Particle p = new Particle(i, pMass, x, v);
+                this.particles.Add(p);
+           } 
+        }
+
 
         public override int GetNumDOFs()
         {
-            return 3 * this._particles.Count;
+            return 3 * this.particles.Count;
         }
+
 
         public override void GetState(Vector<float> x, Vector<float> v, ref float t)
         {
-            t = this._t;
-            for (int p = 0; p < this._particles.Count; p++)
+            t = this.m_t;
+            for (int p = 0; p < this.particles.Count; p++)
             {
-                Particle particle = this._particles[p];
+                Particle particle = this.particles[p];
                 x.SetSubVector(p * 3, 3, particle.x);
                 v.SetSubVector(p * 3, 3, particle.v);
             }
         }
 
+
         public override void SetState(Vector<float> x, Vector<float> v, float t)
         {
-            this._t = t;
-            for (int p = 0; p < this._particles.Count; p++)
+            this.m_t = t;
+            for (int p = 0; p < this.particles.Count; p++)
             {
-                Particle particle = this._particles[p];
+                Particle particle = this.particles[p];
                 particle.x = x.SubVector(p * 3, 3);
                 particle.v = v.SubVector(p * 3, 3);
             }
         }
 
+
         public override void GetInertia(Matrix<float> M)
         {
             M.Clear();
 
-            for (int p = 0; p < this._particles.Count; p++)
+            for (int p = 0; p < this.particles.Count; p++)
             {
-                M.SetSubMatrix(p * 3, p * 3, 3, 3, this._particles[p].m * Matrix<float>.Build.DiagonalIdentity(3, 3));
+                M.SetSubMatrix(p * 3, p * 3, 3, 3, this.particles[p].m * Matrix<float>.Build.DiagonalIdentity(3, 3));
             }
         }
+
 
         public override void GetForces(Vector<float> f)
         {
-            for (int i = 0; i < this._particles.Count; i++)
+            for (int i = 0; i < this.particles.Count; i++)
             {
-                f.SetSubVector(i * 3, 3, this._particles[i].f_ext);
+                f.SetSubVector(i * 3, 3, this.particles[i].f_ext);
             }
-
-            for (int i = 0; i < this._forces.Count; i++)
+            for (int i = 0; i < this.forces.Count; i++)
             {
-                // TODO
-                // this._forces[i]->addForces(f);
+                this.forces[i].AddForces(this, f);
             }
         }
+
 
         public override void GetAccelerations(Vector<float> a)
         {
             this.GetForces(a);
-            for (int p = 0; p < this._particles.Count; p++)
+
+            for (int p = 0; p < this.particles.Count; p++)
             {
-                a.SetSubVector(p * 3, 3, a.SubVector(p * 3, 3) / this._particles[p].m);
+                a.SetSubVector(p * 3, 3, a.SubVector(p * 3, 3) / this.particles[p].m);
             }
         }
 
-        public override void GetJacobians(Matrix<float> Jx, Matrix<float> Jv)
+        
+        public void ClearParticleForces()
         {
-            Jx.Clear();
-            Jv.Clear();
-            for (int i = 0; i < this._forces.Count; i++)
+            for (int i = 0; i < this.particles.Count; i++)
             {
-                // TODO
-                //this._forces[i]->addJacobians(Jx, Jv);
-            }
-        }
-
-        public void ClearForces()
-        {
-            for (int i = 0; i < this._particles.Count; i++)
-            {
-                this._particles[i].f_ext[0] = 0f;
-                this._particles[i].f_ext[1] = 0f;
-                this._particles[i].f_ext[2] = 0f;
+                this.particles[i].f_ext[0] = 0f;
+                this.particles[i].f_ext[1] = 0f;
+                this.particles[i].f_ext[2] = 0f;
             }
         }
 

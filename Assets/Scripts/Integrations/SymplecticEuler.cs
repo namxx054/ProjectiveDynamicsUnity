@@ -7,13 +7,13 @@ namespace PhysicallyBasedAnimations
 {
     public class SymplecticEuler : TimeIntegrator
     {
-        public ParticleSystem system;
+        private ParticleSystem ps;
         private float t;
         private Vector<float> x, v, a;
 
         public void Init(ParticleSystem system)
         {
-            this.system = system;
+            this.ps = system;
             int n = system.GetNumDOFs();
             // preallocate memeory
             this.x = Vector<float>.Build.Dense(n);
@@ -23,12 +23,12 @@ namespace PhysicallyBasedAnimations
 
         public override void step(float dt)
         {
-            this.system.GetState(x, v, ref t);
-            this.system.GetAccelerations(a);
+            this.ps.GetState(x, v, ref t);
+            this.ps.GetAccelerations(a);
             v += a * dt;
             x += v * dt;
             t += dt;
-            this.system.SetState(x, v, (t + dt));
+            this.ps.SetState(x, v, (t + dt));
         }
     }
 }

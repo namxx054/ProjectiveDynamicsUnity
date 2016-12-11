@@ -14,59 +14,56 @@ namespace PhysicallyBasedAnimations
         public string meshDirPath = "Meshes";
         public string filename = "bunny";
 
-        //
-        public List<Vector3> vertices = new List<Vector3>();
-        //
-        public List<Vector3i> triangles = new List<Vector3i>();
-        public List<Vector3i> surfaceTriangles = new List<Vector3i>();
-        //
-        public List<Vector4i> tetrahedra = new List<Vector4i>();
+        // read from the files
+        public List<Vector3> vertices_init = new List<Vector3>();
+        public List<Vector3i> triangles_init = new List<Vector3i>();
+        public List<Vector3i> surfaceTriangles_init = new List<Vector3i>();
+        public List<Vector4i> tetrahedra_init = new List<Vector4i>();
 
+        ///
         private Mesh mesh;
+        private Vector3[] vertices_new; // update based on a simulation
 
-        void Start()
+        public void Init()
         {
-            this.OpenFile(Application.dataPath + "/" + this.meshDirPath + "/" + this.filename);
-            Debug.Log("- # of vertices: " + this.vertices.Count);
-            Debug.Log("- # of tetrahedra: " + this.tetrahedra.Count);
-            Debug.Log("- # of tringles: " + this.triangles.Count);
-            Debug.Log("- # of surface triangles: " + this.surfaceTriangles.Count);
+            // clear...
+            this.vertices_init.Clear();
+            this.triangles_init.Clear();
+            this.surfaceTriangles_init.Clear();
+            this.tetrahedra_init.Clear();
 
-            // make an mesh (just from the surface triangles)
+            // open the node and element files.
+            this.OpenFile(Application.dataPath + "/" + this.meshDirPath + "/" + this.filename);
+            Debug.Log("- # of vertices: " + this.vertices_init.Count);
+            Debug.Log("- # of tetrahedra: " + this.tetrahedra_init.Count);
+            Debug.Log("- # of tringles: " + this.triangles_init.Count);
+            Debug.Log("- # of surface triangles: " + this.surfaceTriangles_init.Count);
+
+            // make an mesh (just from the surface triangles).
             Mesh mesh = new Mesh();
             this.GetComponent<MeshFilter>().mesh = mesh;
             this.mesh = mesh;
-            this.UpdateMesh();
+            this.ResetMesh();
 
+            // update the collider.
             this.GetComponent<MeshCollider>().sharedMesh = mesh;
+
+            //
+            this.vertices_new = new Vector3[this.vertices_init.Count];
         }
 
-        /*void OnRenderObject()
-        {
-            GL.PushMatrix();
-            GL.MultMatrix(transform.localToWorldMatrix);
-            GL.Begin(GL.TRIANGLES);
-            for (int t = 0; t < triangles.Count; t++)
-            {
-                Vector3i tri = triangles[t];
-                for (int v = 0; v < 3; v++)
-                {
-                    Vector3 vertex = this.vertices[tri[v]];
-                    GL.Vertex3(vertex[0], vertex[1], vertex[2]);
-                }
-            }
-            GL.End();
-            GL.PopMatrix();
-        }*/
-        
-        public void UpdateMesh()
-        {
-            Vector3[] newVertices = vertices.ToArray();
-            int[] newTriangles = new int[this.surfaceTriangles.Count * 3];
 
-            for (int t = 0; t < this.surfaceTriangles.Count; t++)
+        /// <summary>
+        /// Reset the mesh from the original data from the node and element files.
+        /// </summary>
+        public void ResetMesh()
+        {
+            Vector3[] newVertices = vertices_init.ToArray();
+            int[] newTriangles = new int[this.surfaceTriangles_init.Count * 3];
+
+            for (int t = 0; t < this.surfaceTriangles_init.Count; t++)
             {
-                Vector3i tri = this.surfaceTriangles[t];
+                Vector3i tri = this.surfaceTriangles_init[t];
                 newTriangles[t * 3] = tri[0];
                 newTriangles[t * 3 + 1] = tri[1];
                 newTriangles[t * 3 + 2] = tri[2];
@@ -79,13 +76,57 @@ namespace PhysicallyBasedAnimations
             this.mesh.RecalculateNormals();
         }
 
+        /// <summary>
+        /// Update the vertices of the mesh from the particle system.
+        /// ASSUME that there is no new particle added or removed from the original set.
+        /// ASSUME that there is no change in surface triangles.
+        /// </summary>
+        /// <param name="ps"></param>
+        public void UpdateMesh(ParticleSystem ps)
+        {
+            List<ParticleSystem.Particle> particles = ps.particles;
+
+            // update vertices
+            for (int i = 0; i < particles.Count; i++)
+            {
+                ParticleSystem.Particle p = particles[i];
+                this.vertices_new[i][0] = p.x[0];
+                this.vertices_new[i][1] = p.x[1];
+                this.vertices_new[i][2] = p.x[2];
+            }
+            // no need to re-update surface triangles
+
+            this.mesh.vertices = this.vertices_new;
+
+            this.mesh.RecalculateBounds();
+            this.mesh.RecalculateNormals();
+        }
+
+        /*void OnRenderObject()
+       {
+           GL.PushMatrix();
+           GL.MultMatrix(transform.localToWorldMatrix);
+           GL.Begin(GL.TRIANGLES);
+           for (int t = 0; t < triangles.Count; t++)
+           {
+               Vector3i tri = triangles[t];
+               for (int v = 0; v < 3; v++)
+               {
+                   Vector3 vertex = this.vertices[tri[v]];
+                   GL.Vertex3(vertex[0], vertex[1], vertex[2]);
+               }
+           }
+           GL.End();
+           GL.PopMatrix();
+       }*/
+
         private void OpenFile(string filePath)
         {
             // clear...
-            this.vertices.Clear();
-            this.triangles.Clear();
-            this.surfaceTriangles.Clear();
-            this.tetrahedra.Clear();
+            this.vertices_init.Clear();
+            this.triangles_init.Clear();
+            this.surfaceTriangles_init.Clear();
+            this.tetrahedra_init.Clear();
 
             Debug.Log("Reading a tetrahedra file... " + this.filename);
             { // nodes
@@ -109,7 +150,7 @@ namespace PhysicallyBasedAnimations
                         line = reader.ReadLine();
                         numbers = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         Vector3 vert = new Vector3(float.Parse(numbers[1]), float.Parse(numbers[2]), float.Parse(numbers[3]));
-                        this.vertices.Add(vert);
+                        this.vertices_init.Add(vert);
                     }
                 }
             } // end-nodes
@@ -135,7 +176,7 @@ namespace PhysicallyBasedAnimations
                         line = reader.ReadLine();
                         numbers = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         Vector4i tet = new Vector4i(int.Parse(numbers[1]), int.Parse(numbers[2]), int.Parse(numbers[3]), int.Parse(numbers[4]));
-                        this.tetrahedra.Add(tet);
+                        this.tetrahedra_init.Add(tet);
                     }
                 }
             } // end-tets
@@ -143,9 +184,9 @@ namespace PhysicallyBasedAnimations
 
             { // triangles            
                 List<bool> isSurfaceTriangle = new List<bool>();
-                for (int t = 0; t < this.tetrahedra.Count; t++)
+                for (int t = 0; t < this.tetrahedra_init.Count; t++)
                 {
-                    Vector4i tet = tetrahedra[t];
+                    Vector4i tet = this.tetrahedra_init[t];
                     Vector3i[] tris = {
                     MakeTriangle (tet [0], tet [2], tet [1]),
                     MakeTriangle (tet [0], tet [1], tet [3]),
@@ -158,10 +199,10 @@ namespace PhysicallyBasedAnimations
                         Vector3i tri = tris[r];
                         Vector3i revTri = new Vector3i(tri[0], tri[2], tri[1]);
                         //int revIndex = this.triangles.IndexOf (revTri); // too slow
-                        int revIndex = this.GetIndexOf(this.triangles, revTri); // much faster to use our own implementation.
+                        int revIndex = this.GetIndexOf(this.triangles_init, revTri); // much faster to use our own implementation.
                         if (revIndex == -1)
                         { // not found
-                            this.triangles.Add(tri);
+                            this.triangles_init.Add(tri);
                             isSurfaceTriangle.Add(true);
                         }
                         else {
@@ -170,11 +211,11 @@ namespace PhysicallyBasedAnimations
                     }
                 }
 
-                for (int r = 0; r < this.triangles.Count; r++)
+                for (int r = 0; r < this.triangles_init.Count; r++)
                 {
                     if (isSurfaceTriangle[r])
                     {
-                        this.surfaceTriangles.Add(triangles[r]);
+                        this.surfaceTriangles_init.Add(this.triangles_init[r]);
                     }
                 }
 
