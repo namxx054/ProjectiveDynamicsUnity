@@ -14,6 +14,9 @@ public class TetSimulation : MonoBehaviour
     public PhysicallyBasedAnimations.ParticleSystem ps;
     public SymplecticEuler integrator;
 
+    public AnchorForce mouseForce;
+    public GameObject mouseParticle;
+
     void Start()
     {
         this.dt = 1f / fps / subSteps;
@@ -30,8 +33,31 @@ public class TetSimulation : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (Input.GetMouseButtonDown(0)) // find the particle to interact with...
         {
-            // Step
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
+            {
+                this.mouseForce.p = this.ps.GetClosestParticle(hit.point, 0.5f);
+               // this.mouseForce.x = new Vector3(this.mouseForce.p.x[0], this.mouseForce.p.x[1], this.mouseForce.p.x[2]);
+                if (this.mouseForce.p != null)
+                {
+                    this.mouseParticle.SetActive(true);
+                    this.mouseParticle.transform.position = new Vector3(this.mouseForce.p.x[0], this.mouseForce.p.x[1], this.mouseForce.p.x[2]);
+                    this.mouseForce.p = null;
+                }
+            }
+        }
+        else if (Input.GetMouseButton(0))
+        {
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            this.mouseParticle.SetActive(false);
+        }
+
+        { // Step
             for (int i = 0; i < this.subSteps; i++)
             {
                 integrator.step(dt);

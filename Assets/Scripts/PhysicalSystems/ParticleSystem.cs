@@ -105,6 +105,26 @@ namespace PhysicallyBasedAnimations
         }
 
 
+        public Particle GetClosestParticle(Vector3 pos, float maxDist)
+        {
+            Particle p = null;
+            float minDist = maxDist;
+            for (int i = 0; i < this.particles.Count; i++)
+            {
+                float dist = Mathf.Sqrt((pos.x - this.particles[i].x[0]) * (pos.x - this.particles[i].x[0]) +
+                    (pos.y - this.particles[i].x[1]) * (pos.x - this.particles[i].x[1]) +
+                    (pos.z - this.particles[i].x[2]) * (pos.x - this.particles[i].x[2]));
+
+                if (dist < minDist)
+                {
+                    minDist = dist;
+                    p = this.particles[i];
+                }
+            }
+            return p;
+        }
+
+
         public class Particle
         {
             public int i;               // index
