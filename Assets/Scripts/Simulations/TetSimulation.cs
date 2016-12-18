@@ -116,7 +116,7 @@ public class TetSimulation : MonoBehaviour
             int cnt = 0;
             for (int i = 0; i < this.pDynamics.constraints.Count; i++)
             {
-               if (( (TetConstraint)this.pDynamics.constraints[i]).wasOver)
+               if (( (TetConstraint)this.pDynamics.constraints[i]).wasViolated)
                 {
                     cnt += 1;
                 }

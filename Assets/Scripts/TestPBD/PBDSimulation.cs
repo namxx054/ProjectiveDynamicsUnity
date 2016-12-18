@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SimpleSim : MonoBehaviour {
+public class PBDSimulation : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {

@@ -115,11 +115,13 @@ namespace PhysicallyBasedAnimations
             this.q_n = this.q_n1;
             this.v_n = this.v_n1;
         }
-
+        
 
         private void UpdateLeftMatrix()
         {
             this.leftMatrix.Clear();
+
+            Matrix<float> leftMatrix = Matrix<float>.Build.Sparse(this.mesh.GetDOF(), this.mesh.GetDOF());
 
             Matrix<float> A = this.CreateAMatrix();
             Matrix<float> A_transpose = A.Transpose();
@@ -130,9 +132,9 @@ namespace PhysicallyBasedAnimations
             {
                 TetConstraint currConstraint = (TetConstraint)this.constraints[i];
                 float w_i = currConstraint.w;
-                Matrix<float> S_i = currConstraint.S;
+               // Matrix<float> S_i = currConstraint.S;
 
-                this.leftMatrix += (w_i * S_i.Transpose() * A_transpose * A * S_i);
+                //this.leftMatrix += (w_i * S_i.Transpose() * A_transpose * A * S_i);
             }
 
             // TODO decomposition
@@ -153,18 +155,19 @@ namespace PhysicallyBasedAnimations
                 }
 
                 float w_i = currConstraint.w;
-                Matrix<float> S_i_transpose = currConstraint.S.Transpose();
+                //Matrix<float> S_i_transpose = currConstraint.S.Transpose();
 
-                currConstraint.SetLeftMatrix(w_i * S_i_transpose * A_transpose * A);
+               // currConstraint.SetLeftMatrix(w_i * S_i_transpose * A_transpose * A);
             }
         }
 
         // see https://www.youtube.com/watch?v=VoVTyMRF67A... at 57:00
+        // specific to a tetrahedron constraint.
+        // update A and B (assume they are equal)
         private Matrix<float> CreateAMatrix()
         {
-            Matrix<float> A = Matrix<float>.Build.Dense(3 * 4, 3 * 4);
+            Matrix<float> A = Matrix<float>.Build.Sparse(3 * 4, 3 * 4);
 
-            // update A and B (assume they are equal)
             for (int row = 0; row < A.RowCount; row++)
             {
                 for (int col = 0; col < A.ColumnCount; col++)
@@ -179,7 +182,6 @@ namespace PhysicallyBasedAnimations
                     }
                 }
             }
-            // Matrix<float> A = Matrix<float>.Build.DiagonalIdentity(3 * 4, 3 * 4);
             return A;
         }
 
