@@ -78,7 +78,7 @@ namespace PhysicallyBasedAnimations
             }
             for (int i = 0; i < this.forces.Count; i++)
             {
-                this.forces[i].AddForces(this, f);
+                this.forces[i].AddForces(ref f);
             }
         }
 

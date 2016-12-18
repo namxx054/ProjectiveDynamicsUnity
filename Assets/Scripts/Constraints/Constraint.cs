@@ -4,8 +4,8 @@ using MathNet.Numerics.LinearAlgebra;
 
 namespace PhysicallyBasedAnimations
 {
-    public class Constraint : MonoBehaviour
+    public class Constraint
     {
-        // TODO
+        public virtual void Project(ref Vector<float> x) { }
     }
 }

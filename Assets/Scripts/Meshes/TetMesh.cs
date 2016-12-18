@@ -19,10 +19,13 @@ namespace PhysicallyBasedAnimations
         public List<Vector3i> triangles_init = new List<Vector3i>();
         public List<Vector3i> surfaceTriangles_init = new List<Vector3i>();
         public List<Vector4i> tetrahedra_init = new List<Vector4i>();
+        public bool[] surfaceVertices_init;
 
         ///
         private Mesh mesh;
         private Vector3[] vertices_new; // update based on a simulation
+
+        private MeshCollider collider;
 
         public void Init()
         {
@@ -38,6 +41,7 @@ namespace PhysicallyBasedAnimations
             Debug.Log("- # of tetrahedra: " + this.tetrahedra_init.Count);
             Debug.Log("- # of tringles: " + this.triangles_init.Count);
             Debug.Log("- # of surface triangles: " + this.surfaceTriangles_init.Count);
+            Debug.Log("- # of surface vertices: " + this.surfaceVertices_init.Length);
 
             // make an mesh (just from the surface triangles).
             Mesh mesh = new Mesh();
@@ -46,7 +50,8 @@ namespace PhysicallyBasedAnimations
             this.ResetMesh();
 
             // update the collider.
-            this.GetComponent<MeshCollider>().sharedMesh = mesh;
+            collider = this.GetComponent<MeshCollider>();
+            collider.sharedMesh = mesh;
 
             //
             this.vertices_new = new Vector3[this.vertices_init.Count];
@@ -102,23 +107,82 @@ namespace PhysicallyBasedAnimations
             this.mesh.RecalculateNormals();
         }
 
+        public void UpdateMesh(ref Vector<float> q)
+        {
+            if (q.Count != this.vertices_new.Length * 3)
+            {
+                Debug.LogError("the length of q is not same as that of mesh vertices. " + q.Count + " != " + (this.vertices_new.Length * 3));
+                return;
+            }
+
+            // update vertices
+            for (int p = 0; p < this.vertices_new.Length; p++)
+            {
+                this.vertices_new[p][0] = q[p * 3 + 0];
+                this.vertices_new[p][1] = q[p * 3 + 1];
+                this.vertices_new[p][2] = q[p * 3 + 2];
+            }
+            // no need to re-update surface triangles
+
+            this.mesh.vertices = this.vertices_new;
+
+            this.mesh.RecalculateBounds();
+            this.mesh.RecalculateNormals();
+
+            collider.sharedMesh = mesh;
+        }
+
+
+       /* public int GetVertex(Vector3 from, float distThreshold, bool includeNonSurfaceVertice)
+        {
+            int idx = -1;
+
+            for (int i = 0; i < this.surfaceVertices_init.Length; i++)
+            {
+
+            }
+
+            return idx;
+        }
+
+
+        private List<int> GetVertice(Vector3 from, float distThreshold, bool includeNonSurfaceVertice)
+        {
+            int idx = -1;
+            float minDist = this.distThreshold;
+            for (int i = 0; i < this.mesh.surfaceVertices_init.Length; i++)
+            {
+                //if (this.mesh.surfaceVertices_init[i])
+                {
+                    float dist = Vector3.Distance(pos, this.mesh.vertices_init[i]);
+                    // Debug.Log(i + " " + dist);
+                    if (dist < minDist)
+                    {
+                        minDist = dist;
+                        idx = i;
+                    }
+                }
+            }
+            return idx;
+        }*/
+
         /*void OnRenderObject()
-       {
-           GL.PushMatrix();
-           GL.MultMatrix(transform.localToWorldMatrix);
-           GL.Begin(GL.TRIANGLES);
-           for (int t = 0; t < triangles.Count; t++)
-           {
-               Vector3i tri = triangles[t];
-               for (int v = 0; v < 3; v++)
-               {
-                   Vector3 vertex = this.vertices[tri[v]];
-                   GL.Vertex3(vertex[0], vertex[1], vertex[2]);
-               }
-           }
-           GL.End();
-           GL.PopMatrix();
-       }*/
+        {
+            GL.PushMatrix();
+            GL.MultMatrix(transform.localToWorldMatrix);
+            GL.Begin(GL.TRIANGLES);
+            for (int t = 0; t < this.triangles_init.Count; t++)
+            {
+                Vector3i tri = triangles_init[t];
+                for (int v = 0; v < 3; v++)
+                {
+                    Vector3 vertex = this.vertices_new[tri[v]];
+                    GL.Vertex3(vertex[0], vertex[1], vertex[2]);
+                }
+            }
+            GL.End();
+            GL.PopMatrix();
+        }*/
 
         private void OpenFile(string filePath)
         {
@@ -205,7 +269,8 @@ namespace PhysicallyBasedAnimations
                             this.triangles_init.Add(tri);
                             isSurfaceTriangle.Add(true);
                         }
-                        else {
+                        else
+                        {
                             isSurfaceTriangle[revIndex] = false;
                         }
                     }
@@ -221,6 +286,34 @@ namespace PhysicallyBasedAnimations
 
             } // end-triangles
             Debug.Log("- done making triangles.");
+
+            /*{
+                for (int i = 0; i < this.surfaceTriangles_init.Count; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        if (!this.surfaceVertices_init.Contains(this.surfaceTriangles_init[i][j]))
+                        {
+                            this.surfaceVertices_init.Add(this.surfaceTriangles_init[i][j]);
+                        }
+                    }
+                }
+            }*/
+
+            {
+                this.surfaceVertices_init = new bool[this.vertices_init.Count];
+                for (int i = 0; i < this.surfaceVertices_init.Length; i++)
+                {
+                    this.surfaceVertices_init[i] = false;
+                }
+                for (int i = 0; i < this.surfaceTriangles_init.Count; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        this.surfaceVertices_init[this.surfaceTriangles_init[i][j]] = true;
+                    }
+                }
+            }
         }
 
         // as described in https://www.dotnetperls.com/array-indexof
@@ -248,7 +341,8 @@ namespace PhysicallyBasedAnimations
             {
                 return new Vector3i(j, k, i);
             }
-            else {
+            else
+            {
                 return new Vector3i(k, i, j);
             }
         }

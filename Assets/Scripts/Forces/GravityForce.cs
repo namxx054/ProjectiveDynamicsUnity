@@ -5,33 +5,17 @@ using System;
 
 namespace PhysicallyBasedAnimations
 {
-    public class GravityForce : Force
+    public class GravityForce : MonoBehaviour
     {
         public Vector3 dir = new Vector3(0, -9.8f, 0);
 
-        private Vector<float> g;
-
-        void Start()
+        public void AddForces(ref Vector<float> f)
         {
-            this.g = Vector<float>.Build.Dense(3);
-        }
-
-        public void SetGravity(Vector3 dir)
-        {
-            this.g[0] = dir[0];
-            this.g[1] = dir[1];
-            this.g[2] = dir[2];
-        }
-
-        public override void AddForces(ParticleSystem ps, Vector<float> f)
-        {
-            // update "g" from "dir"
-            this.SetGravity(this.dir); // for testing in the editor with Vector3
-
-            for (int p = 0; p < ps.particles.Count; p++)
+            for (int i = 0; i < f.Count; i += 3)
             {
-                ParticleSystem.Particle particle = ps.particles[p];
-                f.SetSubVector(p * 3, 3, f.SubVector(p * 3, 3) + (g * particle.m));
+                f[i + 0] += this.dir[0];
+                f[i + 1] += this.dir[1];
+                f[i + 2] += this.dir[2];
             }
         }
     }
